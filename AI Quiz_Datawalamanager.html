@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Replaceable Quiz — DataWalaManager</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1c1c1c;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.18);
+    --text: #f0f0f0;
+    --text-muted: #888;
+    --text-hint: #555;
+    --accent: #c8f135;
+    --accent-dark: #a8d120;
+    --red: #ff4d4d;
+    --amber: #ffb347;
+    --green: #4dff91;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .brand {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 3rem;
+    margin-top: 0.5rem;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 520px;
+  }
+
+  #intro-screen { text-align: center; }
+
+  .big-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.25rem;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .intro-sub {
+    font-size: 15px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .start-btn {
+    background: var(--accent);
+    color: #0a0a0a;
+    border: none;
+    border-radius: 6px;
+    padding: 14px 36px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .start-btn:hover { background: var(--accent-dark); }
+  .start-btn:active { transform: scale(0.97); }
+
+  .meta-row {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+  .meta-item {
+    font-size: 12px;
+    color: var(--text-hint);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .meta-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  #quiz-screen { display: none; }
+
+  .progress-track {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 2rem;
+  }
+  .prog-seg {
+    flex: 1;
+    height: 3px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .prog-seg-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  .q-meta {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 1rem;
+  }
+
+  .q-text {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--text);
+    margin-bottom: 1.75rem;
+  }
+
+  .opts { display: flex; flex-direction: column; gap: 10px; }
+
+  .opt {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.5;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    position: relative;
+  }
+  .opt:hover {
+    border-color: var(--border-hover);
+    color: var(--text);
+    background: var(--surface2);
+  }
+  .opt.picked {
+    border-color: var(--accent);
+    color: var(--text);
+    background: rgba(200,241,53,0.07);
+  }
+  .opt.picked::after {
+    content: '✓';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .next-row {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .next-btn {
+    background: transparent;
+    border: 1px solid var(--border-hover);
+    border-radius: 6px;
+    padding: 11px 24px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    display: none;
+  }
+  .next-btn.visible {
+    display: block;
+  }
+  .next-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .next-btn.final {
+    background: var(--accent);
+    color: #0a0a0a;
+    border-color: var(--accent);
+  }
+  .next-btn.final:hover { background: var(--accent-dark); color: #0a0a0a; }
+
+  #result-screen { display: none; }
+
+  .result-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 99px;
+  }
+  .label-red { background: rgba(255,77,77,0.12); color: var(--red); }
+  .label-amber { background: rgba(255,179,71,0.12); color: var(--amber); }
+  .label-green { background: rgba(77,255,145,0.12); color: var(--green); }
+
+  .result-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+
+  .result-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.8;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .action-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .action-block-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 10px;
+  }
+
+  .action-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--border);
+  }
+
+  .copy-btn {
+    margin-top: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+  .restart-row {
+    margin-top: 1.5rem;
+    text-align: center;
+  }
+  .restart-link {
+    font-size: 13px;
+    color: var(--text-hint);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .restart-link:hover { color: var(--text-muted); }
+
+  .score-bar-wrap {
+    margin-bottom: 1.5rem;
+  }
+  .score-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-hint);
+    margin-bottom: 6px;
+  }
+  .score-bar-track {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 1.5rem 1rem 4rem; }
+    .brand { margin-bottom: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand">DataWalaManager</div>
+
+<div class="container">
+
+  <div id="intro-screen">
+    <div class="big-label">AI Readiness Check</div>
+    <h1>Are you actually <span>replaceable</span> by AI?</h1>
+    <p class="intro-sub">5 honest questions. No fluff. Get a clear picture of where your work stands in the age of AI — from an Engineering Manager who's seen it from the inside.</p>
+    <button class="start-btn" onclick="startQuiz()">Take the quiz →</button>
+    <div class="meta-row">
+      <span class="meta-item"><span class="meta-dot"></span> 5 questions</span>
+      <span class="meta-item"><span class="meta-dot"></span> 2 minutes</span>
+      <span class="meta-item"><span class="meta-dot"></span> Honest result</span>
+    </div>
+  </div>
+
+  <div id="quiz-screen">
+    <div class="progress-track" id="progress-track"></div>
+    <div class="q-meta" id="q-meta">Question 1 of 5</div>
+    <div class="q-text" id="q-text"></div>
+    <div class="opts" id="opts"></div>
+    <div class="next-row">
+      <button class="next-btn" id="next-btn" onclick="nextQ()">Next →</button>
+    </div>
+  </div>
+
+  <div id="result-screen"></div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    text: "Most of your work is...",
+    opts: [
+      { text: "Repetitive — same process, same steps, predictable output every time.", score: 0 },
+      { text: "A mix — some fixed process, some judgment calls along the way.", score: 1 },
+      { text: "Almost entirely judgment, context, and relationships. No two days are the same.", score: 2 }
+    ]
+  },
+  {
+    text: "Your honest relationship with AI tools right now?",
+    opts: [
+      { text: "Scared, honestly. I don't know when I'll be replaced.", score: 0 },
+      { text: "I know about them. Tried a few things. But haven't taken it seriously.", score: 1 },
+      { text: "Already using Claude, ChatGPT, or similar tools in my daily workflow.", score: 2 }
+    ]
+  },
+  {
+    text: "If someone asked you — what can YOU do that AI genuinely can't?",
+    opts: [
+      { text: "Honestly... nothing specific comes to mind right now.", score: 0 },
+      { text: "Some things — customer relationships, team dynamics, context reading.", score: 1 },
+      { text: "I know exactly. These specific skills are why I'm still needed.", score: 2 }
+    ]
+  },
+  {
+    text: "When a new tool or technology changed your industry before — what did you do?",
+    opts: [
+      { text: "Resisted it. I've always been a late adopter.", score: 0 },
+      { text: "Slowly picked it up once everyone else started using it.", score: 1 },
+      { text: "Jumped in early. New tools = opportunity, not threat.", score: 2 }
+    ]
+  },
+  {
+    text: "Your manager says: 'Use AI for this task.' Your reaction?",
+    opts: [
+      { text: "Anxiety. Where do I even start?", score: 0 },
+      { text: "I'll figure it out. It'll take some time but I'll get there.", score: 1 },
+      { text: "Already doing it — and honestly getting better results.", score: 2 }
+    ]
+  }
+];
+
+const results = [
+  {
+    range: [0, 3],
+    labelClass: "label-red",
+    badge: "Wake-up call",
+    title: "Your work is in AI's direct path.",
+    desc: "This isn't a verdict — it's an honest signal. Repetitive, process-driven, clearly defined work is what AI replaces first. The good news? You're reading this now, not after it happens. Pick one AI tool. Give it one part of your job. Experiment, fail, learn. The window is still open.",
+    comment: "\"My work is mostly process-driven — I need to start with AI ASAP. Where do I begin?\"",
+    dm: "Took this AI quiz from DataWalaManager — turns out my work is in AI's direct path. Kinda hit different. You should take it too: [LINK]"
+  },
+  {
+    range: [4, 7],
+    labelClass: "label-amber",
+    badge: "Transition zone",
+    title: "You're in the middle — and that's actually the best place to be.",
+    desc: "You already have some AI-proof skills — judgment, relationships, context. The move now is simple: push all repetitive work to AI. Reclaim that time for the things only you can do. This is evolution, not panic. You're already halfway there.",
+    comment: "\"Transition zone — I have AI-proof skills but need to actually delegate the repetitive stuff to AI.\"",
+    dm: "Just took this AI readiness quiz from DataWalaManager — I'm in the transition zone. Interesting result. Here: [LINK]"
+  },
+  {
+    range: [8, 10],
+    labelClass: "label-green",
+    badge: "Already evolved",
+    title: "You're the reason others' jobs stay safe.",
+    desc: "You've already accepted the evolution. AI is your leverage, not your replacement. Scalability, deployment, customer impact — these are in your bandwidth now because you've delegated the repetitive work. This mindset is rare. Spread it.",
+    comment: "\"Already using AI daily — and I'm spending more time on actual impact now. This quiz nailed it.\"",
+    dm: "Took this quiz from DataWalaManager — apparently I've already evolved with AI. You should check where you stand: [LINK]"
+  }
+];
+
+let current = 0;
+let scores = [];
+let chosen = [];
+
+function startQuiz() {
+  document.getElementById('intro-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  buildProgress();
+  renderQ();
+}
+
+function buildProgress() {
+  const track = document.getElementById('progress-track');
+  track.innerHTML = '';
+  questions.forEach((_, i) => {
+    track.innerHTML += `<div class="prog-seg"><div class="prog-seg-fill" id="seg${i}"></div></div>`;
+  });
+}
+
+function renderQ() {
+  const q = questions[current];
+  document.getElementById('q-meta').textContent = 'Question ' + (current + 1) + ' of ' + questions.length;
+  document.getElementById('q-text').textContent = q.text;
+
+  const opts = document.getElementById('opts');
+  opts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt' + (chosen[current] === i ? ' picked' : '');
+    btn.textContent = o.text;
+    btn.onclick = () => selectOpt(i, o.score);
+    opts.appendChild(btn);
+  });
+
+  const nb = document.getElementById('next-btn');
+  if (chosen[current] !== undefined) {
+    nb.classList.add('visible');
+    nb.className = 'next-btn visible' + (current === questions.length - 1 ? ' final' : '');
+    nb.textContent = current === questions.length - 1 ? 'See my result →' : 'Next →';
+  } else {
+    nb.className = 'next-btn';
+  }
+
+  for (let i = 0; i < questions.length; i++) {
+    const seg = document.getElementById('seg' + i);
+    if (seg) seg.style.width = i < current ? '100%' : (i === current ? '50%' : '0%');
+  }
+}
+
+function selectOpt(i, score) {
+  chosen[current] = i;
+  scores[current] = score;
+  document.querySelectorAll('.opt').forEach((b, idx) => {
+    b.className = 'opt' + (idx === i ? ' picked' : '');
+  });
+  const nb = document.getElementById('next-btn');
+  nb.className = 'next-btn visible' + (current === questions.length - 1 ? ' final' : '');
+  nb.textContent = current === questions.length - 1 ? 'See my result →' : 'Next →';
+}
+
+function nextQ() {
+  if (chosen[current] === undefined) return;
+  document.getElementById('seg' + current).style.width = '100%';
+  if (current < questions.length - 1) {
+    current++;
+    renderQ();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  const total = scores.reduce((a, b) => a + b, 0);
+  const r = results.find(res => total >= res.range[0] && total <= res.range[1]);
+  const pct = Math.round((total / 10) * 100);
+
+  document.getElementById('quiz-screen').style.display = 'none';
+  const rs = document.getElementById('result-screen');
+  rs.style.display = 'block';
+
+  const barColor = total <= 3 ? 'var(--red)' : total <= 7 ? 'var(--amber)' : 'var(--green)';
+
+  rs.innerHTML = `
+    <span class="result-label ${r.labelClass}">${r.badge}</span>
+    <div class="result-title">${r.title}</div>
+
+    <div class="score-bar-wrap">
+      <div class="score-bar-label">
+        <span>AI risk</span>
+        <span>AI-proof</span>
+      </div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill" id="score-fill" style="width:0%;background:${barColor}"></div>
+      </div>
+    </div>
+
+    <div class="result-desc">${r.desc}</div>
+
+    <div class="action-block">
+      <div class="action-block-label">Comment on the reel — copy this</div>
+      <div class="action-text" id="comment-text">${r.comment}</div>
+      <button class="copy-btn" onclick="copyText('comment-text', this)">Copy comment</button>
+    </div>
+
+    <div class="action-block">
+      <div class="action-block-label">Forward to a friend — copy this DM</div>
+      <div class="action-text" id="dm-text">${r.dm}</div>
+      <button class="copy-btn" onclick="copyText('dm-text', this)">Copy DM</button>
+    </div>
+
+    <div class="restart-row">
+      <button class="restart-link" onclick="restart()">Retake the quiz</button>
+    </div>
+  `;
+
+  setTimeout(() => {
+    const fill = document.getElementById('score-fill');
+    if (fill) fill.style.width = pct + '%';
+  }, 100);
+}
+
+function copyText(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = id === 'comment-text' ? 'Copy comment' : 'Copy DM';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+function restart() {
+  current = 0; scores = []; chosen = [];
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  buildProgress();
+  renderQ();
+}
+</script>
+</body>
+</html>
